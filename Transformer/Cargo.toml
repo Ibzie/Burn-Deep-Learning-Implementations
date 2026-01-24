@@ -4,3 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+burn = {version = "0.15", features = ["train", "wgpu"]}
+burn-ndarray = "0.15"
+
+[dev-dependencies]
