@@ -48,23 +48,31 @@ impl<B: Backend> MultiHeadAttention<B> {
     // mask is the optional causal mask (seq_len, seq_len) where True means mask out
     // Returns and output tensor: [batch_size, seq_len, embed_dim]
 
-    pub fn forward(&self, x:Tensor<B, 3>, mask: Option<Tensor<B,2>>) -> Tensor<B,3> {
-        // Split into multi heads
-        // [batch, seq, embed_dim] -> [batch, num_heads, seq, head_dim]
+    pub fn forward(&self, x: Tensor<B, 3>, mask: Option<Tensor<B, 2, Bool>>) -> Tensor<B, 3> {
+        let [batch_size, seq_len, _embed_dim] = x.dims();
 
+        // Step 1: Project input to Q, K, V
+        // [batch, seq, embed_dim] -> [batch, seq, embed_dim]
+        let q = self.query.forward(x.clone());
+        let k = self.key.forward(x.clone());
+        let v = self.value.forward(x);
+
+        // Step 2: Split into multi heads
+        // [batch, seq, embed_dim] -> [batch, num_heads, seq, head_dim]
         let q = self.split_heads(q, batch_size, seq_len);
         let k = self.split_heads(k, batch_size, seq_len);
         let v = self.split_heads(v, batch_size, seq_len);
-    
-        // Compute scaled dot product attention for each head in parallel
-        // [batch, num_heads, seq, head_dim] -> [batch, num_heads, seq, head_dim]
 
+        // Step 3: Compute scaled dot product attention for each head in parallel
+        // [batch, num_heads, seq, head_dim] -> [batch, num_heads, seq, head_dim]
         let attention_output = self.scaled_dot_product_attention(q, k, v, mask);
 
-        // Concatenation of heads as needed
+        // Step 4: Concatenation of heads
         // [batch, num_heads, seq, head_dim] -> [batch, seq, embed_dim]
-
         let attention_output = self.combine_heads(attention_output, batch_size, seq_len);
+
+        // Step 5: Final linear projection
+        self.output.forward(attention_output)
     }
 
     // Split embedding dim into heads
@@ -79,14 +87,25 @@ impl<B: Backend> MultiHeadAttention<B> {
         x.swap_dims(1,2)
     }
 
+    // Combine heads back into single embedding dimension
+    // [batch, num_heads, seq, head_dim] -> [batch, seq, embed_dim]
+    fn combine_heads(&self, x: Tensor<B, 4>, batch_size: usize, seq_len: usize) -> Tensor<B, 3> {
+        // Transpose: [batch, num_heads, seq, head_dim] -> [batch, seq, num_heads, head_dim]
+        let x = x.swap_dims(1, 2);
+
+        // Reshape: [batch, seq, num_heads, head_dim] -> [batch, seq, embed_dim]
+        let embed_dim = self.num_heads * self.head_dim;
+        x.reshape([batch_size, seq_len, embed_dim])
+    }
+
     // Scaled Dot Product Attention => softmax(Q @ K^T / sqrt(d_k)) @ V
     fn scaled_dot_product_attention(
         &self,
-        q: Tensor<B,4>,
-        k: Tensor<B,4>,
-        v: Tensor<B,4>,
-        mask: Option<Tensor<B,2>>,
-    ) -> Tensor<B,4> { // I asked claude to shift my python code to rust here (math is pretty simple for this)
+        q: Tensor<B, 4>,
+        k: Tensor<B, 4>,
+        v: Tensor<B, 4>,
+        mask: Option<Tensor<B, 2, Bool>>,
+    ) -> Tensor<B, 4> {
         // Step 1: Compute attention scores = Q @ K^T
         // Transpose K: [batch, num_heads, seq_len, head_dim] -> [batch, num_heads, head_dim, seq_len]
         let k_transposed = k.swap_dims(2, 3);
@@ -105,8 +124,8 @@ impl<B: Backend> MultiHeadAttention<B> {
         // Prevents tokens from attending to future tokens
         if let Some(mask) = mask {
             // Broadcast mask from [seq_len, seq_len] to [batch, num_heads, seq_len, seq_len]
-            let mask = mask.unsqueeze_dim(0).unsqueeze_dim(0);
-            
+            let mask: Tensor<B, 4, Bool> = mask.unsqueeze_dim::<3>(0).unsqueeze_dim::<4>(0);
+
             // Set masked positions to -inf so softmax makes them ~0
             scores = scores.mask_fill(mask, -1e9);
         }
@@ -127,5 +146,5 @@ impl<B: Backend> MultiHeadAttention<B> {
 #[derive(Config, Debug)]
 pub struct MultiHeadAttentionConfig {
     pub embed_dim: usize, // Total embedding dimension
-    pub num_heads: usizem // Total num of heads
+    pub num_heads: usize, // Total num of heads
 }

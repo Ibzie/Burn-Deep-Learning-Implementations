@@ -1,10 +1,10 @@
 [package]
-name = "Transformer"
+name = "burn-transformer"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
-burn = {version = "0.15", features = ["train", "wgpu"]}
-burn-ndarray = "0.15"
+burn = { version = "0.14", features = ["train", "ndarray", "std"] }
+burn-ndarray = "0.14"
 
 [dev-dependencies]

@@ -6,7 +6,7 @@ use burn::nn;
 /// Simple two-layer MLP: Linear -> GELU -> Linear
 /// This adds non-linearity and allows the model to process each position independently
 
-#[dervice(Module, Debug)]
+#[derive(Module, Debug)]
 pub struct FeedForward<B: Backend> {
     linear1: nn::Linear<B>,
     linear2: nn::Linear<B>,
