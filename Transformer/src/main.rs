@@ -2,6 +2,7 @@ use burn::backend::{Autodiff, NdArray};
 use burn::tensor::Tensor;
 
 mod model;
+pub mod tokenizer;
 
 use model::{Transformer, TransformerConfig};
 

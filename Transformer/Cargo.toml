@@ -6,5 +6,18 @@ edition = "2021"
 [dependencies]
 burn = { version = "0.14", features = ["train", "ndarray", "std"] }
 burn-ndarray = "0.14"
+polars = { version = "0.46", features = ["parquet", "lazy", "describe"] }
+unicode-segmentation = "1.11"
+tokio = { version = "1", features = ["full"] }
+parquet = "54"
+arrow = "54"
 
 [dev-dependencies]
+
+[[bin]]
+name = "eda"
+path = "src/bin/eda.rs"
+
+[[bin]]
+name = "train_tokenizer"
+path = "src/bin/train_tokenizer.rs"
