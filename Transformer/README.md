@@ -1,4 +1,4 @@
-# Urdu GPT — Decoder-Only Transformer in Rust
+# Urdu Completion Transformer — Decoder-Only Transformer in Rust
 
 A from-scratch implementation of a GPT-style decoder-only Transformer for Urdu text generation, built with [Burn](https://burn.dev/) (a Rust deep learning framework).
 

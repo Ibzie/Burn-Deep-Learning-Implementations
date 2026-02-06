@@ -13,7 +13,7 @@ datasets:
 pipeline_tag: text-generation
 ---
 
-# Urdu GPT (10M Parameters)
+# Urdu Completion Transformer (10M Parameters)
 
 A small decoder-only Transformer for Urdu text generation, implemented from scratch in Rust using the [Burn](https://burn.dev/) deep learning framework.
 
@@ -90,8 +90,8 @@ cargo run --release --bin infer
 ## Citation
 
 ```bibtex
-@misc{urdu-gpt-burn,
-  title={Urdu GPT: A Decoder-Only Transformer in Rust},
+@misc{Urdu-Completion-Transformer-10M,
+  title={Urdu Completion Transformer (10M) in Rust},
   year={2024},
   url={https://github.com/Ibzie/Burn-Deep-Learning-Implementations/tree/main/Transformer}
 }
