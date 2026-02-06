@@ -20,7 +20,7 @@ impl<B: Backend> FeedForward<B>{
 
         Self {
             linear1: nn::LinearConfig::new(embed_dim, ff_dim).init(device),
-            linear2: nn::LinearConfig::new(embed_dim, ff_dim).init(device),
+            linear2: nn::LinearConfig::new(ff_dim, embed_dim).init(device),
             dropout: nn::DropoutConfig::new(config.dropout).init(),
         }
     }
