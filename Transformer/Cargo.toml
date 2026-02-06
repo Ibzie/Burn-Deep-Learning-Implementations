@@ -2,15 +2,18 @@
 name = "burn-transformer"
 version = "0.1.0"
 edition = "2021"
+default-run = "burn-transformer"
 
 [dependencies]
-burn = { version = "0.14", features = ["train", "ndarray", "std"] }
+burn = { version = "0.14", features = ["train", "ndarray", "wgpu", "std"] }
 burn-ndarray = "0.14"
+burn-wgpu = "0.14"
 polars = { version = "0.46", features = ["parquet", "lazy", "describe"] }
 unicode-segmentation = "1.11"
 tokio = { version = "1", features = ["full"] }
 parquet = "54"
 arrow = "54"
+rand = "0.8"
 
 [dev-dependencies]
 
@@ -21,3 +24,11 @@ path = "src/bin/eda.rs"
 [[bin]]
 name = "train_tokenizer"
 path = "src/bin/train_tokenizer.rs"
+
+[[bin]]
+name = "train"
+path = "src/bin/train.rs"
+
+[[bin]]
+name = "infer"
+path = "src/bin/infer.rs"

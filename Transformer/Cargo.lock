@@ -850,8 +850,10 @@ dependencies = [
  "arrow",
  "burn",
  "burn-ndarray",
+ "burn-wgpu",
  "parquet",
  "polars",
+ "rand 0.8.5",
  "tokio",
  "unicode-segmentation",
 ]

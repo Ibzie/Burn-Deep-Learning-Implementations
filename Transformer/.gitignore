@@ -1,0 +1,24 @@
+# Build artifacts
+/target/
+
+# Model checkpoints and artifacts (large files)
+/artifacts/
+*.mpk
+*.mpk.gz
+*.bin
+
+# Tokenization cache (can be regenerated)
+*.tokens.cache
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

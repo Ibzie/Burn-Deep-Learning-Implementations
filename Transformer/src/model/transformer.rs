@@ -1,6 +1,10 @@
 use burn::prelude::*;
 use burn::nn;
+use burn::nn::loss::CrossEntropyLossConfig;
+use burn::tensor::backend::AutodiffBackend;
+use burn::train::{TrainOutput, TrainStep, ValidStep};
 
+use crate::data::batcher::TextBatch;
 use super::block::{TransformerBlock, TransformerBlockConfig};
 
 /// Decoder-only Transformer for text generation (GPT-style)
@@ -219,6 +223,84 @@ impl TransformerConfig {
             max_seq_len: 256,
             ff_dim: 512,
             dropout: 0.1,
+        }
+    }
+}
+
+/// Output type for the training/validation steps.
+///
+/// Burn's built-in ClassificationOutput expects [batch, classes] logits and
+/// [batch] targets. We reshape our [batch, seq, vocab] outputs to match.
+#[derive(Debug)]
+pub struct TransformerOutput<B: Backend> {
+    /// Scalar loss value (as a 1-element tensor)
+    pub loss: Tensor<B, 1>,
+    /// Flattened logits: [batch*seq, vocab_size]
+    pub output: Tensor<B, 2>,
+    /// Flattened targets: [batch*seq]
+    pub targets: Tensor<B, 1, Int>,
+}
+
+/// Adapter so Burn's LossMetric can read our output
+impl<B: Backend> burn::train::metric::Adaptor<burn::train::metric::LossInput<B>>
+    for TransformerOutput<B>
+{
+    fn adapt(&self) -> burn::train::metric::LossInput<B> {
+        burn::train::metric::LossInput::new(self.loss.clone())
+    }
+}
+
+/// Training step: forward pass + cross-entropy loss + backward pass
+impl<B: AutodiffBackend> TrainStep<TextBatch<B>, TransformerOutput<B>> for Transformer<B> {
+    fn step(&self, batch: TextBatch<B>) -> TrainOutput<TransformerOutput<B>> {
+        // Forward pass: [batch, seq_len] -> [batch, seq_len, vocab_size]
+        let logits = self.forward(batch.inputs);
+        let [batch_size, seq_len, vocab_size] = logits.dims();
+
+        // Reshape for cross-entropy: logits [batch*seq, vocab], targets [batch*seq]
+        let logits_flat = logits.reshape([batch_size * seq_len, vocab_size]);
+        let targets_flat = batch.targets.reshape([batch_size * seq_len]);
+
+        // Cross-entropy loss, ignoring the pad token (id=0)
+        let loss = CrossEntropyLossConfig::new()
+            .with_pad_tokens(Some(vec![0]))
+            .init(&logits_flat.device())
+            .forward(logits_flat.clone(), targets_flat.clone());
+
+        // Backward pass to compute gradients
+        let grads = loss.backward();
+
+        let output = TransformerOutput {
+            loss: loss.clone(),
+            output: logits_flat,
+            targets: targets_flat,
+        };
+
+        TrainOutput::new(self, grads, output)
+    }
+}
+
+/// Validation step: forward pass + loss only (no backward)
+impl<B: Backend> ValidStep<TextBatch<B>, TransformerOutput<B>> for Transformer<B> {
+    fn step(&self, batch: TextBatch<B>) -> TransformerOutput<B> {
+        // Forward pass: [batch, seq_len] -> [batch, seq_len, vocab_size]
+        let logits = self.forward(batch.inputs);
+        let [batch_size, seq_len, vocab_size] = logits.dims();
+
+        // Reshape for cross-entropy: logits [batch*seq, vocab], targets [batch*seq]
+        let logits_flat = logits.reshape([batch_size * seq_len, vocab_size]);
+        let targets_flat = batch.targets.reshape([batch_size * seq_len]);
+
+        // Cross-entropy loss, ignoring the pad token (id=0)
+        let loss = CrossEntropyLossConfig::new()
+            .with_pad_tokens(Some(vec![0]))
+            .init(&logits_flat.device())
+            .forward(logits_flat.clone(), targets_flat.clone());
+
+        TransformerOutput {
+            loss,
+            output: logits_flat,
+            targets: targets_flat,
         }
     }
 }

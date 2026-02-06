@@ -1,10 +1,7 @@
 use burn::backend::{Autodiff, NdArray};
 use burn::tensor::Tensor;
 
-mod model;
-pub mod tokenizer;
-
-use model::{Transformer, TransformerConfig};
+use burn_transformer::model::{Transformer, TransformerConfig};
 
 type Backend = Autodiff<NdArray>;
 
