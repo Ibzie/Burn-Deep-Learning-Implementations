@@ -1,13 +1,10 @@
 # Burn Deep Learning Implementations
 
-From-scratch implementations of ML/DL architectures in Rust using [Burn](https://burn.dev/). Built for learning — every layer, every gradient, every training loop written by hand.
+From-scratch implementations of ML/DL architectures in Rust using [Burn](https://burn.dev/). Built for learning - every layer, every gradient, every training loop written by hand. (other than this readme)
 
 ## Why Rust + Burn?
 
-- **No hidden magic** — No high-level wrappers hiding what's actually happening
-- **Performance** — Native speed with GPU acceleration via WGPU
-- **Type safety** — Tensor dimensions checked at compile time
-- **Learning** — If you can build it in Rust, you truly understand it
+- To learn rust + these mlmodels from a lot more indepth detail
 
 ## Implementations
 
